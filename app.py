@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from transformers.utils import is_flash_attn_2_available
 import ollama
-device = "cuda:0" if torch.cuda_is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+device = "cuda:0" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
 pipe = pipeline(
     "automatic-speech-recognition",
