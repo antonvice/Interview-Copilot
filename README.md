@@ -51,7 +51,7 @@ The application will be available at http://127.0.0.1:8000.
 * Backend: FastAPI for handling API requests and serving the web application.
 * Frontend: Tailwind CSS for styling and JavaScript for handling user interactions and AJAX requests.
 * ASR Model: distil-whisper/distil-large-v2 from Hugging Face's transformers library for automatic speech recognition.
-* SLM: ollama with gemma:2b-i for generating insightful and context-aware suggestions.
+* SLM: Pick any Ollama model to use from [Ollama Library](https://ollama.ai/library) (I suggest going for smaller models for speed optimization
 
 ## Contributing
 
