@@ -7,15 +7,34 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from transformers.utils import is_flash_attn_2_available
 import ollama
-device = "cuda:0" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
+class ModelManager:
+    def __init__(self):
+        self.model_name = None
+
+    def load_model(self, model_name):
+        try:
+            ollama.pull(model_name)
+            self.model_name = model_name
+            return True, f"Model {model_name} successfully loaded."
+        except Exception as e:
+            return False, f"Error loading model {model_name}: {e}"
+
+    def get_model_name(self):
+        return self.model_name
+    
+
+model_manager = ModelManager()
+
+device = "cuda:0" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 pipe = pipeline(
-    "automatic-speech-recognition",
-    model="distil-whisper/distil-large-v2", # select checkpoint from https://huggingface.co/openai/whisper-large-v3#model-details
-    torch_dtype=torch.float16,
-    device=device, 
-    model_kwargs={"attn_implementation": "flash_attention_2"} if is_flash_attn_2_available() else {"attn_implementation": "sdpa"},
-)
+        "automatic-speech-recognition",
+        model="distil-whisper/distil-large-v2", # select checkpoint from https://huggingface.co/openai/whisper-large-v3#model-details
+        torch_dtype=torch.float16,
+        device=device, 
+        model_kwargs={"attn_implementation": "flash_attention_2"} if is_flash_attn_2_available() else {"attn_implementation": "sdpa"},
+    )
+
 # Define a decorator to measure execution time and print arguments
 def timeit(func):
     def wrapper(*args, **kwargs):
@@ -80,9 +99,25 @@ async def get_suggestions(request: Request):
     return JSONResponse(content={"suggestion": r})
 
     
-    
+
+# Modify the load_model endpoint to use the ModelManager
+@app.post("/submit-model")
+async def load_model(request: Request):
+    data = await request.json()
+    model_name = data.get("model_name")
+    if model_name:
+        success, message = model_manager.load_model(model_name)
+        if success:
+            return HTMLResponse(content=f"<p>{message}</p>")
+        else:
+            return HTMLResponse(content=f"<p>{message}</p>")
+    else:
+        return HTMLResponse(content="<p>ERROR: No model name provided.</p>")
+
+
 async def respond(query):
+    model_name = model_manager.get_model_name()
     messages = [{"role": "user", "content": query}]
-    response = ollama.chat(model='gemma:2b-instruct', messages=messages)
+    response = ollama.chat(model=model_name, messages=messages)
     r = response['message']['content']
     return r

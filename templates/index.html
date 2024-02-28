@@ -5,10 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interview Copilot</title>
     <!-- Include Tailwind CSS from CDN -->
+    <script src="https://unpkg.com/htmx.org"></script>
+
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-200 font-sans">
     <div class="min-h-screen flex flex-col justify-center items-center">
+
+        <form id="modelForm">
+            <div class="mb-4">
+                <h2 class="text-4xl font-bold mb-6 text-gray-800">Ollama Model Selector</h2>
+                <a href="https://ollama.com/library" class="text-blue-500 hover:text-blue-700" target="_blank">Visit Model Library</a>
+                <label for="model_name" class="block text-lg font-semibold text-gray-700 mb-2">Choose a Model (the smaller size the faster):</label>
+                <input type="text" id="model_name" name="model_name" class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter model name">
+            </div>
+            <button type="button" id="submitModel" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none transition-colors">Submit</button>
+        </form>
+        <div id="loadingSpinner" class="hidden">
+            <div class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div id="server-response" class="mt-4 p-4 bg-white rounded shadow" style="display: none;">
+            <!-- Server response with model will be displayed here -->
+        </div>
         <div class="w-full max-w-lg">
             <h1 class="text-4xl font-bold mb-6 text-center text-gray-800">Interview Copilot</h1>
             <div class="bg-white p-6 rounded-lg shadow-lg">
@@ -30,10 +50,36 @@
         </div>
     </div>
     <script>
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        loadingSpinner.classList.add('hidden');
+        document.getElementById('submitModel').addEventListener('click', async () => {
+            const modelName = document.getElementById('model_name').value;
+            loadingSpinner.classList.remove('hidden');
+            const response = await fetch('/submit-model', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model_name: modelName })
+            });
+            const data = await response.text();
+            const serverResponse = document.getElementById('server-response');
+            serverResponse.innerHTML = data;
+            serverResponse.style.display = 'block'; 
+            loadingSpinner.classList.add('hidden');
+
+            // Enable the record and summary buttons if the model is successfully loaded
+            if (!data.includes("ERROR")) {
+                recordButton.disabled = false;
+                summaryButton.disabled = false;
+            }
+
+        });
+
         const recordButton = document.getElementById('recordButton');
         const transcriptDiv = document.getElementById('transcript');
         const summaryButton = document.getElementById('summaryButton');
-        
+
+        recordButton.disabled = true;
+        summaryButton.disabled = true;
         let isRecording = false;
         let mediaRecorder;
         let intervalId;
