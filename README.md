@@ -23,14 +23,14 @@ Before you start, make sure you have Python 3.8+ and pip installed. You will als
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/yourusername/interview-copilot.git
-cd interview-copilot
+git clone https://github.com/antonvice/Real-Time-Free-Local-Interview-Copilot
+cd Real-Time-Free-Local-Interview-Copilot
 ```
 
 2. **Install dependencies:**
 ```
 bash
-pip install fastapi uvicorn transformers tempfile
+pip install fastapi uvicorn transformers tempfile ollama
 ```
 
 3. **Run the application:**
