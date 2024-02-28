@@ -2,6 +2,8 @@
 
 Interview Copilot is an advanced web application designed to assist with conducting professional interviews by providing real-time transcription and generating insightful suggestions based on the ongoing conversation.
 
+![demo](https://github.com/antonvice/Real-Time-Free-Local-Interview-Copilot/blob/master/1.gif)
+
 ## To DO
 
 * Add Model selection
