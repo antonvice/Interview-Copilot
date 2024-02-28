@@ -6,15 +6,14 @@ from fastapi import FastAPI, Request,  File, UploadFile
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse
 from transformers.utils import is_flash_attn_2_available
-import os
 import ollama
+device = "cuda:0" if torch.cuda_is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
-from typing import Dict, Any
 pipe = pipeline(
     "automatic-speech-recognition",
     model="distil-whisper/distil-large-v2", # select checkpoint from https://huggingface.co/openai/whisper-large-v3#model-details
     torch_dtype=torch.float16,
-    device="mps:0", # or mps for Mac devices
+    device=device, 
     model_kwargs={"attn_implementation": "flash_attention_2"} if is_flash_attn_2_available() else {"attn_implementation": "sdpa"},
 )
 # Define a decorator to measure execution time and print arguments
