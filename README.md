@@ -30,7 +30,7 @@ cd Real-Time-Free-Local-Interview-Copilot
 2. **Install dependencies:**
 ```
 bash
-pip install fastapi uvicorn transformers tempfile ollama
+pip install -r requirements.txt
 ```
 
 3. **Run the application:**
