@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Copilot</title>
+    <!-- Include Tailwind CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200 font-sans">
+    <div class="min-h-screen flex flex-col justify-center items-center">
+        <div class="w-full max-w-lg">
+            <h1 class="text-4xl font-bold mb-6 text-center text-gray-800">Interview Copilot</h1>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="mb-4">
+                    <label for="prompt" class="block text-lg font-semibold text-gray-700 mb-2">Prompt:</label>
+                    <textarea id="prompt" rows="4" class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="The Following is a transcript of an ongoing interview. Please provide a suggestion for the answers to the questions. Be brief and concise, but make sure to answer the question on a professional level. Be laconic when possible"></textarea>
+                </div>
+                <div class="flex justify-between space-x-4 mb-4">
+                    <button id="recordButton" class="flex-1 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none transition-colors">Start Recording</button>
+                    <button id="summaryButton" class="flex-1 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none transition-colors">Get Suggestion</button>
+                </div>
+                <div id="transcript" class="p-4 bg-gray-100 rounded-md">
+                    <!-- Transcription results will appear here -->
+                </div>
+                <div id="suggestion" class="mt-4 p-4 bg-gray-100 rounded-md">
+                    <!-- Suggestions will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const recordButton = document.getElementById('recordButton');
+        const transcriptDiv = document.getElementById('transcript');
+        const summaryButton = document.getElementById('summaryButton');
+        
+        let isRecording = false;
+        let mediaRecorder;
+        let intervalId;
+        let full_transcript = '';
+
+        // Set up WebSocket event listeners
+        summaryButton.addEventListener('click', async () => {
+            const promptText = document.getElementById('prompt').value;
+            
+            const response = await fetch('/suggestions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ transcript: full_transcript, prompt: promptText })
+            });
+
+            const data = await response.json();
+            console.log(data);
+            document.getElementById('suggestion').textContent = data.suggestion;
+        });
+
+        recordButton.addEventListener('click', () => {
+            if (!isRecording) {
+                startRecording();
+                recordButton.textContent = 'Stop Recording';
+            } else {
+                stopRecording();
+                recordButton.textContent = 'Start Recording';
+            }
+            isRecording = !isRecording;
+        });
+
+        async function startRecording() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            function createRecorder() {
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.addEventListener('dataavailable', async event => {
+                    console.log('Data available');
+                    const audioBlob = event.data;
+                    const formData = new FormData();
+                    formData.append('file', audioBlob);
+
+                    const response = await fetch('/transcribe', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if(data.transcript != null){
+                        full_transcript += data.transcript;
+                        transcriptDiv.textContent = full_transcript;
+                    }
+                    console.log(data.transcript)
+                });
+                
+                mediaRecorder.start();
+            }
+
+            createRecorder(); // Start recording initially
+
+            // Set interval to stop current recorder and start a new one every 10 seconds
+            intervalId = setInterval(() => {
+                mediaRecorder.stop();
+                createRecorder();
+            }, 5000);
+        }
+
+        function stopRecording() {
+            clearInterval(intervalId); // Stop the interval
+            mediaRecorder.stop();
+        }
+    </script>
+</body>
+</html>
